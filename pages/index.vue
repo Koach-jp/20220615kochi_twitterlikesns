@@ -6,10 +6,10 @@
         <span class="name">{{share.name}}</span>
         <span @click="toggleLike(share.id)">
           <img src="/img/heart.png" class="heart"
-            :class="(share.likes.some((arr)=>arr.uid===uid))? 'liked': null">
+            :class="(share.likes.some((arr)=>arr.uid===$store.state.uid))? 'liked': null">
         </span>
         <span class="like-count">{{share.likes.length}}</span>
-        <span @click="deleteShare(share.id)" v-if="share.uid==uid">
+        <span @click="deleteShare(share.id)" v-if="share.uid==$store.state.uid">
           <img src="/img/cross.png" class="cross">
         </span>
         <span>
@@ -24,13 +24,11 @@
 </template>
 
 <script>
-import firebase from '~/plugins/firebase'
 export default {
   layout: 'home',
   data() {
     return {
       shares: null,
-      uid: null,
     }
   },
   methods: {
@@ -48,7 +46,7 @@ export default {
     async toggleLike(id) {
       const sendData = {
         share_id: id,
-        uid: this.uid
+        uid: this.$store.state.uid
       };
       await this.$axios.post('http://127.0.0.1:8000/api/like/', sendData);
       this.getShares();
@@ -56,9 +54,7 @@ export default {
   },
   created() {
     this.getShares();
-    firebase.auth().onAuthStateChanged((user)=>{
-      if (user) {this.uid = user.uid}
-      });
+    this.$nuxt.$on('getShares',()=>{this.getShares()})
   }
 }
 </script>

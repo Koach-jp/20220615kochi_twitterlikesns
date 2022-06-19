@@ -7,10 +7,10 @@
         <p>{{share.content}}</p>
         <span @click="toggleLike(share.id)">
           <img src="/img/heart.png" class="heart"
-            :class="(share.likes.some((arr)=>arr.uid===uid))? 'liked': null">
+            :class="(share.likes.some((arr)=>arr.uid===$store.state.uid))? 'liked': null">
         </span>
         <span class="like-count">{{share.likes.length}}</span>
-        <span @click="deleteShare(share.id)" v-if="share.uid===uid">
+        <span @click="deleteShare(share.id)" v-if="share.uid===$store.state.uid">
           <img src="/img/cross.png" class="cross">
         </span>
         <span><label for="comment">
@@ -22,7 +22,7 @@
       <div v-for="com in comments" :key="com.id" class="comments">
         <span class="name">{{com.name}}</span>
         <span class="date">{{$dayjs(com.created_at).format('YYYY年M月D日(ddd) H:mm:ss')}}</span>
-        <span @click="deleteComment(com.id)" v-if="com.uid===uid">
+        <span @click="deleteComment(com.id)" v-if="com.uid===$store.state.uid">
           <img src="/img/cross.png" class="cross small">
         </span>
         <p>{{com.content}}</p>
@@ -42,7 +42,6 @@
 </template>
 
 <script>
-import firebase from '~/plugins/firebase'
 export default {
   layout: 'home',
   data() {
@@ -51,8 +50,6 @@ export default {
       share: null,
       comments: null,
       comment: null,
-      uid: null,
-      name:null,
     }
   },
   methods: {
@@ -71,10 +68,11 @@ export default {
     async sendComment() {
       const sendData = {
         share_id: this.id,
-        uid: this.uid,
-        name: this.name,
+        uid: this.$store.state.uid,
+        name: this.$store.state.name,
         content: this.comment,
       };
+      this.comment = null;
       await this.$axios.post('http://127.0.0.1:8000/api/comment/', sendData);
       this.getShare();
     },
@@ -88,7 +86,7 @@ export default {
     async toggleLike(id) {
       const sendData = {
         share_id: id,
-        uid: this.uid
+        uid: this.$store.state.uid
       };
       await this.$axios.post('http://127.0.0.1:8000/api/like/', sendData);
       this.getShare();
@@ -96,12 +94,6 @@ export default {
   },
   async created() {
     this.id = await this.$route.query.share_id;
-    firebase.auth().onAuthStateChanged((user)=>{
-      if (user) {
-        this.uid = user.uid;
-        this.name = user.displayName;
-      }
-    });
     this.getShare();
   }
 }

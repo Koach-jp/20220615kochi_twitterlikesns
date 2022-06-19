@@ -27,10 +27,10 @@
           シェアする
         </button>
       </validation-observer>
-      <p class="status">ログインステータス：{{ loginState }}</p>
-      <p class="status">ユーザーネーム：{{ name }}</p>
+      <p class="status">ログインステータス：{{ $store.state.loginState }}</p>
+      <p class="status">ユーザーネーム：{{ $store.state.name }}</p>
       <p class="status">
-        メールアドレス：{{ isEmail ? '認証済み':'未認証' }}
+        メールアドレス：{{ $store.state.isEmail ? '認証済み':'未認証' }}
       </p>
       <div class="bottom">
         <NuxtLink to="register">新規登録</NuxtLink>
@@ -48,10 +48,6 @@ import firebase from '~/plugins/firebase'
 export default {
   data() {
     return {
-      loginState: 'ログインしてください',
-      name: null,
-      isEmail: false,
-      uid: null,
       share: null,
     }
   },
@@ -59,37 +55,23 @@ export default {
     logout() {
       firebase.auth().signOut();
     },
-    loginCheck() {
-      firebase.auth()
-        .onAuthStateChanged((user) => {
-          if (user) {
-            this.loginState = 'ログイン済み';
-            this.name = user.displayName;
-            this.isEmail = user.emailVerified;
-            this.uid = user.uid;
-          } else {
-            alert('ログアウト済み：ログインしてください');
-            this.$router.replace('/login');
-          }
-        })
-    },
     async sendShare() {
       const sendData = {
-        uid: this.uid,
-        name: this.name,
+        uid: this.$store.state.uid,
+        name: this.$store.state.name,
         content: this.share
       };
-      await this.$axios.post('http://127.0.0.1:8000/api/share/', sendData);
       this.share = null;
-      if (this.$route.path==='/') {
-        location.reload();
+      await this.$axios.post('http://127.0.0.1:8000/api/share/', sendData);
+      if (this.$route.path === '/') {
+        this.$nuxt.$emit('getShares');
       } else {
         this.$router.push('/');
       }
-    }
+    },
   },
   created() {
-    this.loginCheck();
+    this.$store.dispatch('loginCheck');
   }
 }
 </script>
