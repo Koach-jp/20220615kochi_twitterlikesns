@@ -53,7 +53,10 @@ export default {
   },
   methods: {
     logout() {
-      firebase.auth().signOut();
+      const boo = confirm('ログアウトしますか？');
+      if (boo) {
+        firebase.auth().signOut();
+      }
     },
     async sendShare() {
       const sendData = {
